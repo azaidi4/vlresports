@@ -1,7 +1,10 @@
-const playersService = require("../services/playersService");
-const catchError = require("../utils/catchError");
+import {
+  getPlayers as _getPlayers,
+  getPlayerById as _getPlayerById,
+} from '../services/playersService.js';
+import { catchError } from '../utils/catchError.js';
 
-const getPlayers = async (req, res) => {
+export const getPlayers = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = req.query.limit || 10;
   const pagination = {
@@ -9,15 +12,15 @@ const getPlayers = async (req, res) => {
     limit,
   };
 
-  const event_series = req.query.event_series || "all";
-  const event = req.query.event || "all";
-  const country = req.query.country || "all";
-  const region = req.query.region || "all";
+  const event_series = req.query.event_series || 'all';
+  const event = req.query.event || 'all';
+  const country = req.query.country || 'all';
+  const region = req.query.region || 'all';
   const minrounds = req.query.minrounds || 200;
   const minrating = req.query.minrating || 1550;
-  const agent = req.query.agent || "all";
-  const map = req.query.map_id || "all";
-  const timespan = req.query.timespan || "60d";
+  const agent = req.query.agent || 'all';
+  const map = req.query.map_id || 'all';
+  const timespan = req.query.timespan || '60d';
 
   const filters = {
     event_series,
@@ -35,9 +38,9 @@ const getPlayers = async (req, res) => {
     const {
       players,
       pagination: { totalElements, totalPages, hasNextPage },
-    } = await playersService.getPlayers(pagination, filters);
+    } = await _getPlayers(pagination, filters);
     res.json({
-      status: "OK",
+      status: 'OK',
       size: players.length,
       pagination: {
         page,
@@ -53,20 +56,15 @@ const getPlayers = async (req, res) => {
   }
 };
 
-const getPlayerById = async (req, res) => {
+export const getPlayerById = async (req, res) => {
   const { id } = req.params;
   try {
-    const player = await playersService.getPlayerById(id);
+    const player = await _getPlayerById(id);
     res.json({
-      status: "OK",
+      status: 'OK',
       data: player,
     });
   } catch (error) {
     catchError(res, error);
   }
-};
-
-module.exports = {
-  getPlayers,
-  getPlayerById,
 };
