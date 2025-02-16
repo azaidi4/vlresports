@@ -42,7 +42,7 @@ async function parseMatches(date: string, status: 'past' | 'future') {
         status,
         tournament: {
           name: matchItem
-            .querySelector(matchSelectors.tournament.root)
+            .querySelector(matchSelectors.tournament.name)
             ?.lastChild?.text.trim(),
           event: matchItem
             .querySelector(matchSelectors.tournament.event)

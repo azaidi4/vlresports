@@ -8,7 +8,7 @@ export const matchSelectors = {
     score: '.match-item-vs-team-score',
   },
   tournament: {
-    root: '.match-item-event',
+    name: '.match-item-event',
     event: '.match-item-event-series',
     img: '.match-item-icon img',
   },
