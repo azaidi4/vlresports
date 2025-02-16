@@ -47,7 +47,7 @@ async function parseMatches(date: string, status: 'past' | 'future') {
           event: matchItem
             .querySelector(matchSelectors.tournament.event)
             ?.text.trim(),
-          img: url?.includes('owlcdn')
+          img: url?.includes('vlr')
             ? process.env.VLR_URL + url
             : 'https:' + url,
         },
