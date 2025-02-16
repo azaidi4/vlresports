@@ -9,7 +9,6 @@ import { router as teamsRouter } from './versions/v1/routes/teams.js';
 import { router as playersRouter } from './versions/v1/routes/players.js';
 import { router as eventsRouter } from './versions/v1/routes/events.js';
 import { router as matchesRouter } from './versions/v1/routes/matches.js';
-import { router as resultsRouter } from './versions/v1/routes/results.js';
 
 const app = express();
 
@@ -48,7 +47,6 @@ app.use('/api/v1/teams', cache(), teamsRouter);
 app.use('/api/v1/players', cache(), playersRouter);
 app.use('/api/v1/events', cache(), eventsRouter);
 app.use('/api/v1/matches', cache(), matchesRouter);
-app.use('/api/v1/results', cache(), resultsRouter);
 
 app.get('/api/cache/performance', (req, res) => {
   res.json(apiCache.getPerformance());
