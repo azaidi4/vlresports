@@ -17,8 +17,7 @@ async function parseMatches(date: string, status: 'past' | 'future') {
 
   const res = await fetch(url);
   const html = await res.text();
-  const root = parse(html);
-  return root
+  return parse(html)
     .querySelectorAll(matchSelectors.root)
     .filter((matchItem) =>
       isSameDay(
