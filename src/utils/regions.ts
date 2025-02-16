@@ -1,4 +1,5 @@
 export type RegionKey = keyof typeof regions;
+export type RegionValues = (typeof regions)[keyof typeof regions];
 
 export const regions = {
   na: 'north-america',
@@ -14,4 +15,4 @@ export const regions = {
   mena: 'mena',
   gc: 'gc',
   all: 'all',
-};
+} as const;

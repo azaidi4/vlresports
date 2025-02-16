@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import express, { urlencoded, json } from 'express';
-import apicache from 'apicache';
+import apiCache from 'apicache';
 import morgan from 'morgan';
 import cors from 'cors';
 
@@ -13,14 +13,16 @@ import { router as resultsRouter } from './versions/v1/routes/results.js';
 
 const app = express();
 
-apicache.options({
+apiCache.options({
   debug: true,
+  defaultDuration: process.env.CACHE_DURATION || '5 minutes',
   statusCodes: {
     include: [200],
   },
   enabled: false,
 });
-const cache = apicache.middleware;
+
+const cache = apiCache.middleware;
 
 // Settings
 app.set('port', process.env.SERVER_PORT || 5000);
@@ -30,24 +32,31 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(urlencoded({ extended: false }));
 app.use(json());
+app.use(function (req, res, next) {
+  res.setHeader(
+    'User-Agent',
+    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
+  );
+  next();
+});
 
 // Routes
 app.use(router);
 app.use('/api', router);
 // - Version 1
-app.use('/api/v1/teams', cache('5 minutes'), teamsRouter);
-app.use('/api/v1/players', cache('5 minutes'), playersRouter);
-app.use('/api/v1/events', cache('5 minutes'), eventsRouter);
-app.use('/api/v1/matches', cache('5 minutes'), matchesRouter);
-app.use('/api/v1/results', cache('5 minutes'), resultsRouter);
+app.use('/api/v1/teams', cache(), teamsRouter);
+app.use('/api/v1/players', cache(), playersRouter);
+app.use('/api/v1/events', cache(), eventsRouter);
+app.use('/api/v1/matches', cache(), matchesRouter);
+app.use('/api/v1/results', cache(), resultsRouter);
 
 app.get('/api/cache/performance', (req, res) => {
-  res.json(apicache.getPerformance());
+  res.json(apiCache.getPerformance());
 });
 
 // add route to display cache index
 app.get('/api/cache/index', (req, res) => {
-  res.json(apicache.getIndex());
+  res.json(apiCache.getIndex());
 });
 
 // Starting server

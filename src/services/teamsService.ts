@@ -1,25 +1,38 @@
 import { fromURL } from 'cheerio';
+import { RegionValues } from '../utils/regions';
 
-/**
- * Fetches teams' information from the given region with pagination.
- * @param {object} pagination - Pagination configuration.
- * @param {string} pagination.limit - The number of items per page or "all".
- * @param {number} pagination.page - The current page number.
- * @param {string} region - The region from which to fetch the teams' information.
- * @returns {object} An object containing teams' information and pagination details.
- */
-export async function getTeams(pagination, region) {
+interface Pagination {
+  page: number;
+  limit: number | string;
+}
+
+interface Team {
+  id: string;
+  url: string;
+  name: string;
+  img: string;
+  country: string;
+}
+
+export async function scrapeTeams(
+  pagination: Pagination,
+  region: RegionValues
+) {
   // Calculate the start and end indices based on pagination
   const startIndex =
-    pagination.limit !== 'all' ? (pagination.page - 1) * pagination.limit : 0;
+    typeof pagination.limit !== 'string'
+      ? (pagination.page - 1) * pagination.limit
+      : 0;
   const endIndex =
-    pagination.limit !== 'all' ? pagination.page * pagination.limit : undefined;
+    typeof pagination.limit !== 'string'
+      ? pagination.page * pagination.limit
+      : undefined;
 
   // Send a request to get the HTML content of the rankings page for the specified region
 
   const $ = await fromURL(`${process.env.VLR_URL}/rankings/${region}`);
 
-  const teams = [];
+  const teams: Team[] = [];
 
   if (region === 'all') {
     // For the "all" region, parse the teams' data from the table rows
@@ -28,7 +41,8 @@ export async function getTeams(pagination, region) {
       .slice(startIndex, endIndex !== undefined ? endIndex : undefined)
       .map((i, el) => {
         // Extract team information from the table row
-        const name = $(el).find('td').first().next().attr('data-sort-value');
+        const name =
+          $(el).find('td').first().next().attr('data-sort-value') ?? '';
         const id = $(el)
           .find('td')
           .first()
@@ -51,15 +65,13 @@ export async function getTeams(pagination, region) {
           : 'https:' + $(el).find('td').first().next().find('img').attr('src');
         const country = $(el).find('.rank-item-team-country').text().trim();
 
-        const team = {
+        teams.push({
           id,
           url,
           name,
           img,
           country,
-        };
-
-        teams.push(team);
+        });
       });
   } else {
     // For other specific regions, parse the teams' data from a different section of the page
@@ -70,7 +82,7 @@ export async function getTeams(pagination, region) {
       .slice(startIndex, endIndex !== undefined ? endIndex : undefined)
       .map((i, el) => {
         // Extract team information from the corresponding section
-        const name = $(el).find('a').first().attr('data-sort-value');
+        const name = $(el).find('a').first().attr('data-sort-value') ?? '';
         const id = $(el).find('a').first().attr('href').split('/')[2];
         const url = process.env.VLR_URL + $(el).find('a').first().attr('href');
         const img = $(el)
@@ -84,15 +96,13 @@ export async function getTeams(pagination, region) {
           : 'https:' + $(el).find('a').first().find('img').attr('src');
         const country = $(el).find('.rank-item-team-country').text().trim();
 
-        const team = {
+        teams.push({
           id,
           url,
           name,
           img,
           country,
-        };
-
-        teams.push(team);
+        });
       });
   }
 
@@ -123,7 +133,7 @@ export async function getTeams(pagination, region) {
  * @param {string} id - Team ID.
  * @returns {Object} - Team information.
  */
-export async function getTeamById(id) {
+export async function scrapeTeamById(id) {
   const $ = await fromURL(`${process.env.VLR_URL}/team/${id}`);
 
   const matchesResponse = await fetch(
