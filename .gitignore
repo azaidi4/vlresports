@@ -131,3 +131,6 @@ dist
 
 # personal todo
 todo.md
+
+# Redis
+redisdata/dump.rdb

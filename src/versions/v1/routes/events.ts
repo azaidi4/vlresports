@@ -1,6 +1,11 @@
 import { Router } from 'express';
-import { getEvents } from '../../../controllers/eventsController.js';
+import {
+  getEvents,
+  getEventsStream,
+  updateEventsStream,
+} from '../../../controllers/eventsController';
 
 export const router = Router();
 router.get('/', getEvents);
-// router.get("/:id", playersController.getPlayerById);
+router.get('/stream', getEventsStream);
+router.patch('/stream', updateEventsStream);

@@ -8,7 +8,14 @@ export async function getMatches(date: string) {
     parseMatches(date, 'past'),
     parseMatches(date, 'future'),
   ]);
-  return [...past.reverse(), ...future];
+
+  const merged = { ...past };
+
+  Object.keys(future).forEach((key) => {
+    merged[key] = merged[key] ? merged[key].concat(future[key]) : future[key];
+  });
+
+  return merged;
 }
 
 async function parseMatches(date: string, status: 'past' | 'future') {
@@ -17,60 +24,80 @@ async function parseMatches(date: string, status: 'past' | 'future') {
 
   const res = await fetch(url);
   const html = await res.text();
-  return parse(html)
+
+  const matchesOnDate = parse(html)
     .querySelectorAll(matchSelectors.root)
     .filter((matchItem) =>
       isSameDay(
         date,
-        matchItem.parentNode.previousElementSibling?.firstChild?.text.trim() ||
+        matchItem.parentNode.previousElementSibling?.firstChild?.rawText.trim() ||
           ''
       )
-    )
-    .map((matchItem) => {
-      const status = matchItem
-        .querySelector(matchSelectors.status)
-        ?.text.trim()
-        .toLowerCase();
+    );
 
-      const url = matchItem
-        .querySelector(matchSelectors.tournament.img)
-        ?.getAttribute('src');
+  const matchesMap: Record<string, object[]> = {};
+  for (
+    let i = status === 'past' ? matchesOnDate.length - 1 : 0;
+    status === 'past' ? i >= 0 : i < matchesOnDate.length;
+    status === 'past' ? i-- : i++
+  ) {
+    const matchItem = matchesOnDate[i];
 
-      return {
-        id: matchItem.getAttribute('href')?.split('/')[1],
-        status,
-        tournament: {
-          name: matchItem
+    const tournamentName =
+      matchItem
+        .querySelector(matchSelectors.tournament.name)
+        ?.lastChild?.rawText.trim() || '';
+
+    if (!matchesMap[tournamentName]) {
+      matchesMap[tournamentName] = [];
+    }
+
+    const status = matchItem
+      .querySelector(matchSelectors.status)
+      ?.rawText.trim()
+      .toLowerCase();
+
+    const tournamentImgUrl = matchItem
+      .querySelector(matchSelectors.tournament.img)
+      ?.getAttribute('src');
+
+    matchesMap[tournamentName].push({
+      id: matchItem.getAttribute('href')?.split('/')[1],
+      status,
+      tournament: {
+        name:
+          matchItem
             .querySelector(matchSelectors.tournament.name)
-            ?.lastChild?.text.trim(),
-          event: matchItem
-            .querySelector(matchSelectors.tournament.event)
-            ?.text.trim(),
-          img: url?.includes('vlr')
-            ? process.env.VLR_URL + url
-            : 'https:' + url,
-        },
-        teams: matchItem
-          .querySelectorAll(matchSelectors.team.root)
-          .map((team) => {
-            const countryName = team
-              .querySelector(matchSelectors.team.country)
-              ?.classNames.split('-')[1];
-            const countryImg = `https://www.vlr.gg/img/icons/flags/16/${countryName}.png`;
-            const country = { name: countryName, img: countryImg };
+            ?.lastChild?.rawText.trim() || '',
+        event: matchItem
+          .querySelector(matchSelectors.tournament.event)
+          ?.rawText.trim(),
+        img: tournamentImgUrl?.includes('vlr')
+          ? process.env.VLR_URL + tournamentImgUrl
+          : 'https:' + tournamentImgUrl,
+      },
+      teams: matchItem
+        .querySelectorAll(matchSelectors.team.root)
+        .map((team) => {
+          const countryName = team
+            .querySelector(matchSelectors.team.country)
+            ?.classNames.split('-')[1];
+          const countryImg = `https://www.vlr.gg/img/icons/flags/16/${countryName}.png`;
+          const country = { name: countryName, img: countryImg };
 
-            return {
-              name: team.querySelector(matchSelectors.team.name)?.text.trim(),
-              country,
-              score:
-                status === 'live' || status === 'completed'
-                  ? team.querySelector(matchSelectors.team.score)?.text.trim()
-                  : undefined,
-            };
-          }),
-        timestamp: getTime(
-          date + ' ' + matchItem.querySelector(matchSelectors.time)?.text.trim()
-        ),
-      };
+          return {
+            name: team.querySelector(matchSelectors.team.name)?.rawText.trim(),
+            country,
+            score:
+              status === 'live' || status === 'completed'
+                ? team.querySelector(matchSelectors.team.score)?.rawText.trim()
+                : undefined,
+          };
+        }),
+      timestamp: getTime(
+        date + ' ' + matchItem.querySelector(matchSelectors.time)?.rawText.trim()
+      ),
     });
+  }
+  return matchesMap;
 }

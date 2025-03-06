@@ -1,6 +1,14 @@
-import { RequestHandler } from 'express';
-import { getEvents as _getEvents } from '../services/eventsService.js';
-import { regions } from '../utils/regions.js';
+import { RequestHandler, Response } from 'express';
+import { v4 as uuid } from 'uuid';
+
+import { getEvents as _getEvents } from '../services/eventsService';
+import { regions } from '../utils/regions';
+
+const clients = new Map<string, Response>();
+const testData: { count: number; timestamp: number } = {
+  count: 0,
+  timestamp: Date.now(),
+};
 
 export const getEvents: RequestHandler<
   object,
@@ -38,6 +46,37 @@ export const getEvents: RequestHandler<
       data: null,
     });
   }
+};
+
+export const getEventsStream: RequestHandler = (req, res) => {
+  const headers = {
+    'Content-Type': 'text/event-stream',
+    Connection: 'keep-alive',
+    'Cache-Control': 'no-cache',
+  };
+
+  res.writeHead(200, headers);
+  res.write(`data: ${JSON.stringify(testData)}\n\n`);
+
+  const clientId = uuid();
+  clients.set(clientId, res);
+  req.log.info({ msg: 'New connection for client', clientId });
+
+  req.on('close', () => {
+    req.log.info({ msg: 'Connection closed for client', clientId });
+    clients.delete(clientId);
+  });
+};
+
+export const updateEventsStream: RequestHandler = (req, res) => {
+  testData.count++;
+  testData.timestamp = Date.now();
+  res.status(200).send();
+  return sendEventsToAll();
+};
+
+const sendEventsToAll = () => {
+  clients.forEach((res) => res.write(`data: ${JSON.stringify(testData)}\n\n`));
 };
 
 // To do: Add getEventById
