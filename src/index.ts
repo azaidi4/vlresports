@@ -1,15 +1,15 @@
 import 'dotenv/config';
-import express, { urlencoded, json } from 'express';
+
 import apiCache from 'apicache';
-import morgan from 'morgan';
 import cors from 'cors';
 import pinoHttp from 'pino-http';
 
-import { router } from './versions/v1/routes/index.js';
-import { router as teamsRouter } from './versions/v1/routes/teams.js';
-import { router as playersRouter } from './versions/v1/routes/players.js';
-import { router as eventsRouter } from './versions/v1/routes/events.js';
-import { router as matchesRouter } from './versions/v1/routes/teams';
+import express, { json, urlencoded } from 'express';
+import { router as eventsRouter } from './versions/v1/routes/events';
+import { router as indexRouter } from './versions/v1/routes/index';
+import { router as matchesRouter } from './versions/v1/routes/matches';
+import { router as playersRouter } from './versions/v1/routes/players';
+import { router as teamsRouter } from './versions/v1/routes/teams';
 import { logger } from './utils/logger';
 
 const app = express();
@@ -33,7 +33,7 @@ app.use(cors());
 app.use(pinoHttp({ logger }));
 app.use(urlencoded({ extended: false }));
 app.use(json());
-app.use(function (req, res, next) {
+app.use(function (_, res, next) {
   res.setHeader(
     'User-Agent',
     'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
@@ -42,8 +42,8 @@ app.use(function (req, res, next) {
 });
 
 // Routes
-app.use(router);
-app.use('/api', router);
+app.use(indexRouter);
+app.use('/api', indexRouter);
 // - Version 1
 app.use('/api/v1/teams', cache(), teamsRouter);
 app.use('/api/v1/players', cache(), playersRouter);
