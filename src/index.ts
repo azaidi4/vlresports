@@ -3,12 +3,14 @@ import express, { urlencoded, json } from 'express';
 import apiCache from 'apicache';
 import morgan from 'morgan';
 import cors from 'cors';
+import pinoHttp from 'pino-http';
 
 import { router } from './versions/v1/routes/index.js';
 import { router as teamsRouter } from './versions/v1/routes/teams.js';
 import { router as playersRouter } from './versions/v1/routes/players.js';
 import { router as eventsRouter } from './versions/v1/routes/events.js';
-import { router as matchesRouter } from './versions/v1/routes/matches.js';
+import { router as matchesRouter } from './versions/v1/routes/teams';
+import { logger } from './utils/logger';
 
 const app = express();
 
@@ -28,7 +30,7 @@ app.set('port', process.env.SERVER_PORT || 5000);
 
 // Middlewares
 app.use(cors());
-app.use(morgan('dev'));
+app.use(pinoHttp({ logger }));
 app.use(urlencoded({ extended: false }));
 app.use(json());
 app.use(function (req, res, next) {
@@ -59,5 +61,5 @@ app.get('/api/cache/index', (req, res) => {
 
 // Starting server
 app.listen(app.get('port'), () => {
-  console.log(`Server running on port ${app.get('port')}`);
+  logger.info(`Server running on port ${app.get('port')}`);
 });
