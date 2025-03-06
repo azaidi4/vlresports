@@ -1,9 +1,8 @@
-FROM node:20.10.0
-WORKDIR /app
+FROM node:22.14.0-alpine
+WORKDIR /app/
 
-COPY package-lock.json package-lock.json
+COPY package.json ./
 RUN npm install
 
 COPY . .
-
-ENTRYPOINT [ "npm","start" ]
+EXPOSE 5000
