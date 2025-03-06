@@ -133,4 +133,4 @@ dist
 todo.md
 
 # Redis
-redisdata/dump.rdb
+redisdata/
